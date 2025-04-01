@@ -1,0 +1,36 @@
+version: '3.8' 
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: nestly-mysql  
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root  
+      MYSQL_DATABASE: nestly_db  
+      MYSQL_USER: usuario        
+      MYSQL_PASSWORD: 123456789 
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - nestly-network  
+
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: nestly-phpmyadmin
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: mysql  
+      PMA_PORT: 3306
+    depends_on:
+      - mysql
+    networks:
+      - nestly-network  
+
+volumes:
+  mysql_data:
+
+networks:
+  nestly-network:
