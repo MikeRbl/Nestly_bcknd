@@ -41,30 +41,26 @@ class AuthController extends Controller
     // Login de usuario
     public function login(Request $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
-        ]);
-
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        $credentials = $request->only('email', 'password');
+    
+        if (Auth::attempt($credentials)) {
+            $user = Auth::user();
+            $token = $user->createToken('authToken')->plainTextToken;
+            
             return response()->json([
-                'message' => 'Credenciales inválidas'
-            ], 401);
+                'estatus' => true,
+                'access_token' => $token,
+                'user' => [
+                    'email' => $user->email,
+                    'name' => $user->name
+                ]
+            ]);
         }
-
-        $user = User::where('email', $request->email)->first();
-        $token = $user->createToken('auth_token')->plainTextToken;
-
+    
         return response()->json([
-            'message' => 'Login exitoso',
-            'token' => $token,
-            'user' => [
-                'id' => $user->id,
-                'first_name' => $user->first_name,
-                'email' => $user->email,
-                'role' => $user->role,
-            ]
-        ]);
+            'estatus' => false,
+            'message' => 'Credenciales inválidas'
+        ], 401);
     }
 
     // Logout de usuario
