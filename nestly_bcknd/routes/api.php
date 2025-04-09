@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\PropiedadController;  
 
 Route::post('login', [AuthController::class, 'login']);
 Route::post('register', [AuthController::class, 'register']);
@@ -18,4 +19,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('users/{id}', [UserController::class, 'destroy']);
     Route::get('user', [AuthController::class, 'logData']);
     
+    // Rutas de propiedades
+    Route::post('propiedades', [PropiedadController::class, 'store']);  
+    Route::get('propiedades', [PropiedadController::class, 'index']);  
+    Route::get('propiedades/{id}', [PropiedadController::class, 'show']);  
+    Route::put('propiedades/{id}', [PropiedadController::class, 'update']);  
+    Route::delete('propiedades/{id}', [PropiedadController::class, 'destroy']);  
 });

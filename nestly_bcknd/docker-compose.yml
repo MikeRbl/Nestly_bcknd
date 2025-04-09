@@ -1,20 +1,42 @@
-version: '3.8' 
-
 services:
+  app:
+    build:
+      context: .
+    container_name: nestly-app
+    volumes:
+      - .:/var/www
+    working_dir: /var/www
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - nestly-network
+    ports:
+      - "9000:9000"
+
   mysql:
     image: mysql:8.0
-    container_name: nestly-mysql  
+    container_name: nestly-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: nestly_db
+      MYSQL_USER: usuario
+      MYSQL_PASSWORD: 123456789
     ports:
       - "3306:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: root  
-      MYSQL_DATABASE: nestly_db  
-      MYSQL_USER: usuario        
-      MYSQL_PASSWORD: 123456789 
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
-      - nestly-network  
+      - nestly-network
+
+  redis:
+    image: redis:alpine
+    container_name: nestly-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - nestly-network
 
   phpmyadmin:
     image: phpmyadmin
@@ -22,12 +44,33 @@ services:
     ports:
       - "8080:80"
     environment:
-      PMA_HOST: mysql  
+      PMA_HOST: nestly-mysql
       PMA_PORT: 3306
     depends_on:
       - mysql
     networks:
-      - nestly-network  
+      - nestly-network
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: nestly-mailpit
+    ports:
+      - "8025:8025"
+    networks:
+      - nestly-network
+
+  nginx:
+    image: nginx:latest
+    container_name: nestly-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - .:/var/www  # Volumen para la aplicación
+      - ./nginx.conf:/etc/nginx/nginx.conf  # Asegúrate de que nginx.conf esté en la raíz de tu proyecto
+    depends_on:
+      - app
+    networks:
+      - nestly-network
 
 volumes:
   mysql_data:

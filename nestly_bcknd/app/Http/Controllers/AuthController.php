@@ -72,6 +72,8 @@ class AuthController extends Controller
 
     public function logData(Request $request)
     {
-        return response()->json(['message' => $request->user()]);
+        $user = $request->user();
+    
+        return response()->json(['user' => $user] );
     }
 }
