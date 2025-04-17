@@ -76,4 +76,60 @@ class AuthController extends Controller
     
         return response()->json(['user' => $user] );
     }
+
+
+
+    public function update(Request $request, $id)
+    {
+        // 1. Validar los datos de entrada
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'sometimes|string|max:255',
+            'last_name_paternal' => 'sometimes|string|max:255',
+            'last_name_maternal' => 'sometimes|string|max:255',
+            'email' => 'sometimes|string|email|max:255|unique:users,email,'.$id,
+            'phone' => 'sometimes|string|max:20',
+            'password' => 'sometimes|string|min:8|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // 2. Buscar el usuario
+        $user = User::find($id);
+        
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Usuario no encontrado'
+            ], 404);
+        }
+
+        // 3. Preparar los datos para actualizar
+        $updateData = $request->only([
+            'first_name',
+            'last_name_paternal',
+            'last_name_maternal',
+            'email',
+            'phone'
+        ]);
+
+        // 4. Manejar la contraseña si viene en la solicitud
+        if ($request->has('password')) {
+            $updateData['password'] = Hash::make($request->password);
+        }
+
+        // 5. Actualizar el usuario
+        $user->update($updateData);
+
+        // 6. Retornar respuesta exitosa
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuario actualizado correctamente',
+            'user' => $user->fresh() // Retorna el usuario con los datos actualizados
+        ]);
+    }
 }
