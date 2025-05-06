@@ -24,9 +24,40 @@ class UserController extends Controller
     // Actualizar un usuario (ej: perfil)
     public function update(Request $request, $id)
     {
+        // Validación de campos
+        $validatedData = $request->validate([
+            'first_name' => 'sometimes|string|max:255',
+            'last_name_paternal' => 'sometimes|string|max:255',
+            'last_name_maternal' => 'sometimes|string|max:255',
+            'phone' => 'sometimes|string|max:20',
+            'email' => 'sometimes|email|unique:users,email,'.$id,
+            'password' => 'sometimes|string|min:8|confirmed', 
+        ]);
+    
+        // Buscar usuario
         $user = User::findOrFail($id);
-        $user->update($request->all());
-        return response()->json($user);
+    
+        // Verificar permisos
+        if (auth()->id() != $user->id && !auth()->user()->is_admin) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permiso para editar este perfil'
+            ], 403);
+        }
+    
+        // Encriptar contraseña si se proporciona
+        if ($request->has('password')) {
+            $validatedData['password'] = bcrypt($validatedData['password']);
+        }
+    
+        // Actualizar usuario
+        $user->update($validatedData);
+    
+        return response()->json([
+            'success' => true,
+            'message' => 'Perfil actualizado correctamente',
+            'user' => $user
+        ]);
     }
 
     // Eliminar un usuario (solo admin)

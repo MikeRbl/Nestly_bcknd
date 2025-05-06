@@ -1,6 +1,5 @@
 <?php
 
-// app/Models/User.php
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -29,4 +28,16 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    // Relación con Propiedades (un usuario puede tener muchas propiedades)
+    public function propiedades()
+    {
+        return $this->hasMany(Propiedad::class, 'id_propietario', 'id');
+    }
+
+    // Accesor para el nombre completo
+    public function getFullNameAttribute()
+    {
+        return "{$this->first_name} {$this->last_name_paternal} {$this->last_name_maternal}";
+    }
 }

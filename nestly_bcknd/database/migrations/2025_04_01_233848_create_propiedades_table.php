@@ -26,7 +26,7 @@ return new class extends Migration
             $table->integer('metros_cuadrados'); 
             $table->boolean('amueblado'); 
             $table->string('disponibilidad', 20); 
-            $table->text('fotos')->nullable(); 
+      
             $table->timestamps(); 
         });
     }
