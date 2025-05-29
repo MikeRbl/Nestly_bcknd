@@ -18,11 +18,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('users/{id}', [UserController::class, 'update']);
     Route::delete('users/{id}', [UserController::class, 'destroy']);
     Route::get('user', [AuthController::class, 'logData']);
+    Route::post('update-profile-picture', [UserController::class, 'updateProfilePicture']);
     
     // Rutas de propiedades
     Route::post('propiedades', [PropiedadController::class, 'store']);  
     Route::get('propiedades', [PropiedadController::class, 'index']);  
     Route::get('propiedades/{id}', [PropiedadController::class, 'show']);  
     Route::put('propiedades/{id}', [PropiedadController::class, 'update']);  
-    Route::delete('propiedades/{id}', [PropiedadController::class, 'destroy']);  
+    Route::delete('propiedades/{id}', [PropiedadController::class, 'destroy']); 
+    Route::post('update-profile-picture', [UserController::class, 'updateProfilePicture']); 
 });

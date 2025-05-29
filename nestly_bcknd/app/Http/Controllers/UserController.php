@@ -5,35 +5,39 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Facades\Image; // Para redimensionar imágenes
+use Illuminate\Support\Facades\Auth;
+use Intervention\Image\Facades\Image;
 
 class UserController extends Controller
 {
-    // Obtener todos los usuarios (solo admin)
+    /**
+     * Obtener todos los usuarios (solo admin)
+     */
     public function index()
     {
-        $this->authorize('viewAny', User::class); // Política de acceso
+        $this->authorize('viewAny', User::class);
         $users = User::all();
         return response()->json($users);
     }
 
-    // Mostrar un usuario específico
+    /**
+     * Mostrar un usuario específico
+     */
     public function show($id)
     {
         $user = User::findOrFail($id);
-        $this->authorize('view', $user); // Política de acceso
+        $this->authorize('view', $user);
         return response()->json($user);
     }
 
-    // Actualizar un usuario (incluyendo avatar)
+    /**
+     * Actualizar información de usuario
+     */
     public function update(Request $request, $id)
     {
         $user = User::findOrFail($id);
-        
-        // Verificar permisos (solo el propio usuario o un admin puede editar)
         $this->authorize('update', $user);
 
-        // Validación de campos
         $validatedData = $request->validate([
             'first_name' => 'sometimes|string|max:255',
             'last_name_paternal' => 'sometimes|string|max:255',
@@ -41,37 +45,57 @@ class UserController extends Controller
             'phone' => 'sometimes|string|max:20',
             'email' => 'sometimes|email|unique:users,email,'.$id,
             'password' => 'sometimes|string|min:8|confirmed',
-            'avatar' => 'sometimes|image|mimes:jpeg,png,jpg|max:2048', // 2MB máximo
+            'avatar' => 'sometimes|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        // Procesar avatar si se envió
         if ($request->hasFile('avatar')) {
-            $this->updateAvatar($user, $request->file('avatar'));
+            $this->updateUserAvatar($user, $request->file('avatar'));
         }
 
-        // Encriptar contraseña si se proporciona
         if ($request->has('password')) {
             $validatedData['password'] = bcrypt($validatedData['password']);
         }
 
-        // Actualizar usuario
         $user->update($validatedData);
 
         return response()->json([
             'success' => true,
             'message' => 'Perfil actualizado correctamente',
-            'user' => $user->fresh(), // Devuelve el usuario con los cambios actualizados
-            'avatar_url' => $user->avatar_url // Incluye la URL del avatar
+            'user' => $user->fresh(),
+            'avatar_url' => $user->avatar_url
         ]);
     }
 
-    // Eliminar un usuario (solo admin)
+    /**
+     * Endpoint específico para actualizar foto de perfil
+     */
+    public function updateProfilePicture(Request $request)
+    {
+        $user = Auth::user();
+        
+        $request->validate([
+            'profile_picture' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        if ($request->hasFile('profile_picture')) {
+            $this->updateUserAvatar($user, $request->file('profile_picture'));
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Foto de perfil actualizada correctamente',
+            'profile_picture_url' => $user->fresh()->avatar_url
+        ]);
+    }
+
+    /**
+     * Eliminar un usuario (solo admin)
+     */
     public function destroy($id)
     {
         $user = User::findOrFail($id);
-        $this->authorize('delete', $user); // Política de acceso
+        $this->authorize('delete', $user);
 
-        // Eliminar avatar si existe
         if ($user->avatar) {
             Storage::delete('public/avatars/' . $user->avatar);
         }
@@ -80,21 +104,30 @@ class UserController extends Controller
         return response()->json(['message' => 'Usuario eliminado']);
     }
 
-    // Método privado para actualizar avatar (reutilizable)
-    private function updateAvatar(User $user, $avatarFile)
+    /**
+     * Método privado para manejar la actualización de avatares
+     */
+    private function updateUserAvatar(User $user, $imageFile)
     {
         // Eliminar avatar anterior si existe
         if ($user->avatar) {
             Storage::delete('public/avatars/' . $user->avatar);
         }
 
-        // Generar nombre único y guardar
-        $filename = $user->id . '_' . time() . '.' . $avatarFile->extension();
-        
-        // Redimensionar y guardar (opcional)
-        $image = Image::make($avatarFile)->fit(200, 200);
-        $image->save(storage_path('app/public/avatars/' . $filename));
+        // Generar nombre único
+        $filename = $user->id.'_'.time().'.'.$imageFile->extension();
 
+        // Redimensionar y optimizar imagen
+        $image = Image::make($imageFile)
+            ->fit(200, 200, function ($constraint) {
+                $constraint->upsize();
+            })
+            ->encode($imageFile->extension(), 85);
+
+        // Guardar en storage
+        Storage::put('public/avatars/'.$filename, $image);
+
+        // Actualizar base de datos
         $user->avatar = $filename;
         $user->save();
     }
