@@ -18,7 +18,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('users/{id}', [UserController::class, 'update']);
     Route::delete('users/{id}', [UserController::class, 'destroy']);
     Route::get('user', [AuthController::class, 'logData']);
-    Route::post('update-profile-picture', [UserController::class, 'updateProfilePicture']);
+Route::post('user/profile-picture', [UserController::class, 'updateProfilePicture']);
     
     // Rutas de propiedades
     Route::post('propiedades', [PropiedadController::class, 'store']);  
