@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use App\Models\User;
 
 class Propiedad extends Model
 {
@@ -37,25 +39,21 @@ class Propiedad extends Model
     ];
 
     protected $casts = [
-        'fotos' => 'array',
+        'fotos' => 'array', 
         'apartamento' => 'boolean',
         'casaPlaya' => 'boolean',
         'industrial' => 'boolean',
         'anualizado' => 'boolean',
         'amueblado' => 'boolean',
+        'disponibilidad' => 'boolean',
         'precio' => 'decimal:2',
-        'deposito' => 'decimal:2'
+        'deposito' => 'decimal:2',
     ];
 
-    // Relación con el propietario (User)
+    // Relación con usuario propietario
     public function propietario()
     {
         return $this->belongsTo(User::class, 'id_propietario');
     }
 
-    // Accesor para las fotos (asegura retornar array incluso si es null)
-    public function getFotosAttribute($value)
-    {
-        return $value ? json_decode($value, true) : [];
-    }
 }

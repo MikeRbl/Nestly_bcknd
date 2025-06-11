@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator; // Asegúrate de importar Validator
 
 class AuthController extends Controller
 {
@@ -47,14 +48,22 @@ class AuthController extends Controller
             $user = Auth::user();
             $token = $user->createToken('authToken')->plainTextToken;
             
+            // ==================== SOLUCIÓN APLICADA AQUÍ ====================
+            // Ahora devolvemos todos los datos necesarios para el frontend.
             return response()->json([
                 'estatus' => true,
                 'access_token' => $token,
                 'user' => [
+                    'id' => $user->id, // ¡LA CLAVE DEL PROBLEMA!
+                    'first_name' => $user->first_name,
+                    'last_name_paternal' => $user->last_name_paternal,
+                    'last_name_maternal' => $user->last_name_maternal,
                     'email' => $user->email,
-                    'name' => $user->name
+                    'phone' => $user->phone,
+                    'role' => $user->role
                 ]
             ]);
+            // ==============================================================
         }
     
         return response()->json([
@@ -76,8 +85,6 @@ class AuthController extends Controller
     
         return response()->json(['user' => $user] );
     }
-
-
 
     public function update(Request $request, $id)
     {
@@ -118,7 +125,7 @@ class AuthController extends Controller
         ]);
 
         // 4. Manejar la contraseña si viene en la solicitud
-        if ($request->has('password')) {
+        if ($request->filled('password')) { // Usar filled() es más seguro que has()
             $updateData['password'] = Hash::make($request->password);
         }
 
