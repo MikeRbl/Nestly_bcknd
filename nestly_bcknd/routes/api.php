@@ -4,10 +4,12 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PropiedadController;  
+use App\Http\Controllers\Api\TipoPropiedadController;
 
 Route::post('login', [AuthController::class, 'login']);
 Route::post('register', [AuthController::class, 'register']);
-
+Route::get('/tipos-propiedad', [TipoPropiedadController::class, 'index']);
+    
 // Rutas protegidas
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
@@ -27,4 +29,5 @@ Route::post('user/profile-picture', [UserController::class, 'updateProfilePictur
     Route::put('propiedades/{id}', [PropiedadController::class, 'update']);  
     Route::delete('propiedades/{id}', [PropiedadController::class, 'destroy']); 
     Route::post('update-profile-picture', [UserController::class, 'updateProfilePicture']); 
+    //obtener tipos de propiedad
 });

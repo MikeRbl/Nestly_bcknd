@@ -14,60 +14,66 @@ class PropiedadController extends Controller
     /**
      * Crea una nueva propiedad y guarda sus fotos.
      */
-    public function store(Request $request)
+     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'titulo' => 'required|string|max:255',
-            'descripcion' => 'required|string',
-            'direccion' => 'required|string|max:255',
-            'pais' => 'required|string|max:100',
-            'estado' => 'required|string|max:100',
-            'ciudad' => 'required|string|max:100',
-            'colonia' => 'nullable|string|max:100',
-            'precio' => 'required|numeric',
-            'habitaciones' => 'required|integer|min:0',
-            'banos' => 'required|integer|min:0',
-            'metros_cuadrados' => 'required|integer|min:0',
-            'amueblado' => 'required|boolean',
-            'disponibilidad' => 'required|boolean',
-            'email' => 'required|email|max:255',
-            'telefono' => 'required|string|max:15',
-            'apartamento' => 'nullable|boolean',
-            'casaPlaya' => 'nullable|boolean',
-            'industrial' => 'nullable|boolean',
-            'anualizado' => 'nullable|boolean',
-            'deposito' => 'nullable|numeric',
-            'mascotas' => 'required|in:si,no',
-            'tamano' => 'nullable|integer',
-            'fotos' => 'nullable|array',
-            'fotos.*' => 'image|mimes:jpg,jpeg,png,gif,svg|max:2048',
+        // 1. Validamos los datos que SÍ existen en el nuevo formulario
+        $validatedData = $request->validate([
+            'titulo'            => 'required|string|max:255',
+            'descripcion'       => 'required|string',
+            'direccion'         => 'required|string|max:255',
+            'pais'              => 'required|string|max:100',
+            'estado_ubicacion'  => 'required|string|max:100',
+            'ciudad'            => 'required|string|max:100',
+            'colonia'           => 'nullable|string|max:100',
+            'precio'            => 'required|numeric|min:0',
+            'habitaciones'      => 'required|integer|min:0',
+            'banos'             => 'required|integer|min:0',
+            'metros_cuadrados'  => 'required|integer|min:0',
+            'amueblado'         => 'required|boolean',
+            'anualizado'        => 'required|boolean', 
+            'mascotas'          => 'required|in:si,no',
+            'tipo_propiedad_id' => 'required|exists:tipos_propiedad,id', 
+            'deposito'          => 'nullable|numeric', 
+            'tamano'            => 'nullable|string', 
+
+            // Contacto y Fotos
+            'email'             => 'required|email|max:255',
+            'telefono'          => 'required|string|max:15',
+            'fotos'             => 'required|array',
+            'fotos.*'           => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048'
         ]);
 
-        try {
-            $photoPaths = [];
-            if ($request->hasFile('fotos')) {
-                foreach ($request->file('fotos') as $photo) {
-                    $path = $photo->store('propiedades', 'public');
-                    $photoPaths[] = $path;
-                }
+        // 2. Procesamos las fotos
+        $photoPaths = [];
+        if ($request->hasFile('fotos')) {
+            foreach ($request->file('fotos') as $photo) {
+                // Guarda la foto en 'storage/app/public/propiedades' y obtiene la ruta
+                $path = $photo->store('propiedades', 'public');
+                $photoPaths[] = $path;
             }
-
-            // Asignamos el array de rutas directamente. Eloquent lo codificará.
-            $validated['fotos'] = $photoPaths;
-            $validated['id_propietario'] = Auth::id();
-
-            $propiedad = Propiedad::create($validated);
-
-            return response()->json([
-                'success' => true,
-                'data' => $propiedad,
-                'message' => 'Propiedad creada exitosamente'
-            ], 201);
-
-        } catch (\Exception $e) {
-            Log::error('Error en PropiedadController@store: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Error al crear la propiedad', 'error' => $e->getMessage()], 500);
         }
+        
+        // 3. Preparamos el array final para guardar en la base de datos
+        $dataToSave = $validatedData;
+        $dataToSave['fotos'] = json_encode($photoPaths); // Guardamos las rutas como un JSON
+        $dataToSave['id_propietario'] = auth()->id(); // Asignamos el ID del usuario logueado
+        $dataToSave['estado_propiedad'] = 'Disponible'; // Asignamos el estado por defecto
+
+        // 4. Creamos la propiedad
+        try {
+            $propiedad = Propiedad::create($dataToSave);
+        } catch (\Exception $e) {
+            // Si algo sale mal, lo registramos en el log
+            Log::error('Error al crear la propiedad: ' . $e->getMessage());
+            return response()->json(['message' => 'Error interno al guardar la propiedad.'], 500);
+        }
+        
+        // 5. Devolvemos una respuesta de éxito
+        return response()->json([
+            'success' => true,
+            'message' => 'Propiedad publicada exitosamente',
+            'data' => $propiedad
+        ], 201);
     }
 
     /**
