@@ -92,25 +92,48 @@ class UserController extends Controller
         return response()->json(['message' => 'Usuario eliminado']);
     }
 
-    private function updateUserAvatar(User $user, $imageFile)
-    {
-        // Eliminar avatar anterior si existe.
-        if ($user->avatar) {
-            // Asumiendo que $user->avatar solo guarda el nombre del archivo
-            // y que el accesor del modelo User espera los avatares en 'public/avatars/'
-            Storage::disk('public')->delete('avatars/' . $user->avatar);
+    
+    // En tu controlador, modifica el método updateUserAvatar:
+        private function updateUserAvatar(User $user, $imageFile)
+        {
+            // Eliminar avatar anterior si existe
+            if ($user->avatar) {
+                Storage::disk('public')->delete('avatars/' . $user->avatar);
+            }
+
+            // Generar nombre único
+            $filename = Str::uuid() . '.' . $imageFile->getClientOriginalExtension();
+
+            // Guardar en storage (asegúrate que la carpeta avatars existe)
+            $path = $imageFile->storeAs('public/avatars', $filename);
+
+            // Actualizar base de datos
+            $user->avatar = $filename;
+            $user->save();
+
+            return $path; // Para debugging
         }
+    // Elimina específicamente la foto de perfil
+        public function deleteProfilePicture($id)
+{
+    $user = User::findOrFail($id);
+    
+    // Verificación manual (sin políticas)
+    if (auth()->id() !== $user->id) {
+        abort(403, 'No tienes permiso para esta acción');
+    }
 
-        // Generar nombre único para el archivo.
-        $filename = Str::uuid() . '.' . $imageFile->getClientOriginalExtension();
-
-
-        // Guardar el archivo original en 'storage/app/public/avatars/'
-        $imageFile->storeAs('avatars', $filename, 'public');
-
-        // Actualizar base de datos con SOLO el nombre del archivo
-        $user->avatar = $filename;
+    if ($user->avatar) {
+        Storage::disk('public')->delete('avatars/'.$user->avatar);
+        $user->avatar = null;
         $user->save();
     }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Foto eliminada',
+        'avatar_url' => $user->avatar_url // URL de imagen por defecto
+    ]);
+}
 }
 

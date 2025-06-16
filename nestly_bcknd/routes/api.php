@@ -20,8 +20,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('users/{id}', [UserController::class, 'update']);
     Route::delete('users/{id}', [UserController::class, 'destroy']);
     Route::get('user', [AuthController::class, 'logData']);
-Route::post('user/profile-picture', [UserController::class, 'updateProfilePicture']);
-    
+    Route::post('user/profile-picture', [UserController::class, 'updateProfilePicture']);
+    Route::delete('/users/{user}/avatar', [UserController::class, 'deleteProfilePicture']);
     // Rutas de propiedades
     Route::post('propiedades', [PropiedadController::class, 'store']);  
     Route::get('propiedades', [PropiedadController::class, 'index']);  
@@ -29,5 +29,6 @@ Route::post('user/profile-picture', [UserController::class, 'updateProfilePictur
     Route::put('propiedades/{id}', [PropiedadController::class, 'update']);  
     Route::delete('propiedades/{id}', [PropiedadController::class, 'destroy']); 
     Route::post('update-profile-picture', [UserController::class, 'updateProfilePicture']); 
-    //obtener tipos de propiedad
+    
+    Route::get('users/{user}/propiedades', [PropiedadController::class, 'indexByUser']);
 });

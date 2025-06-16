@@ -57,31 +57,29 @@ class User extends Authenticatable
     }
 
     // Accesor para la URL del avatar
-    public function getAvatarUrlAttribute()
-    {
-        if (!$this->avatar) {
-            return asset('images/default-avatar.jpg');
+
+        public function getAvatarUrlAttribute()
+        {
+            if (!$this->avatar) {
+                
+                return asset('storage/avatars/usuario.png');
+            }
+            
+            return asset('storage/avatars/'.$this->avatar);
         }
-        
-        // Verifica si ya es una URL completa (por si viene de redes sociales)
-        if (filter_var($this->avatar, FILTER_VALIDATE_URL)) {
-            return $this->avatar;
-        }
-        
-        return Storage::exists('public/avatars/'.$this->avatar) 
-            ? asset('storage/avatars/'.$this->avatar)
-            : asset('images/default-avatar.jpg');
-    }
 
     // Método para eliminar el avatar
     public function deleteAvatar()
-    {
-        if ($this->avatar && Storage::exists('public/avatars/'.$this->avatar)) {
-            Storage::delete('public/avatars/'.$this->avatar);
-            $this->avatar = null;
-            $this->save();
-        }
+{
+    if ($this->avatar) {
+        // Elimina el archivo físico 
+        Storage::disk('public')->delete('avatars/'.$this->avatar);
+        
+        // Limpia el campo en la BD
+        $this->avatar = null;
+        $this->save();
     }
+}
 
     // Eventos del modelo
     protected static function boot()
