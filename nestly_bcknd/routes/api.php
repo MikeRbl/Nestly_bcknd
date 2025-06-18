@@ -30,5 +30,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('propiedades/{id}', [PropiedadController::class, 'destroy']); 
     Route::post('update-profile-picture', [UserController::class, 'updateProfilePicture']); 
     
+
     Route::get('users/{user}/propiedades', [PropiedadController::class, 'indexByUser']);
 });
+    
