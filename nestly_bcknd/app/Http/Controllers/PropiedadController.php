@@ -140,13 +140,34 @@ class PropiedadController extends Controller
             }
 
             $validatedData = $request->validate([
-                // ... (todas tus validaciones de antes no cambian)
-                'titulo'             => 'sometimes|required|string|max:255',
-                // ...
-                'fotos'              => 'sometimes|array',
-                'fotos.*'            => 'sometimes|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-                'existing_fotos'     => 'sometimes|json' // Validamos que el campo nuevo sea un JSON
-            ]);
+    'titulo'             => 'sometimes|required|string|max:255',
+    'descripcion'        => 'sometimes|required|string',
+    'direccion'          => 'sometimes|required|string|max:255',
+    'pais'               => 'sometimes|required|string|max:100',
+    'estado_ubicacion'   => 'sometimes|required|string|max:100',
+    'ciudad'             => 'sometimes|required|string|max:100',
+    'colonia'            => 'nullable|string|max:100',
+    'latitud'            => 'sometimes|required|numeric',
+    'longitud'           => 'sometimes|required|numeric',
+    'precio'             => 'sometimes|required|numeric|min:0',
+    'habitaciones'       => 'sometimes|required|integer|min:0',
+    'banos'              => 'sometimes|required|integer|min:0',
+    'metros_cuadrados'   => 'sometimes|required|integer|min:0',
+    'deposito'           => 'nullable|numeric',
+    'amueblado'          => 'sometimes|required|boolean',
+    'anualizado'         => 'sometimes|required|boolean',
+    'mascotas'           => 'sometimes|required|in:si,no',
+    'tipo_propiedad_id'  => 'sometimes|required|exists:tipos_propiedad,id',
+    'email'              => 'sometimes|required|email|max:255',
+    'telefono'           => 'sometimes|required|string|max:15',
+    'estado_propiedad'   => 'sometimes|required|string|in:Disponible,Rentada,Inactiva',
+    
+    // Fotos
+    'fotos'              => 'sometimes|array',
+    'fotos.*'            => 'sometimes|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+    'existing_fotos'     => 'sometimes|json',
+]);
+
 
             // --- Lógica para manejar la actualización de fotos ---
             $currentPhotos = $propiedad->fotos ?? []; // Fotos actualmente en la BD
