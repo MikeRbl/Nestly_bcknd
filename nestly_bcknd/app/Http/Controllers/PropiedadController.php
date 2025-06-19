@@ -17,7 +17,7 @@ class PropiedadController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Propiedad::with('tipoPropiedad')->orderBy('created_at', 'desc');
+            $query = Propiedad::with('tipoPropiedad', 'propietario')->orderBy('created_at', 'desc');
 
             if ($request->has('id_propietario')) {
                 $query->where('id_propietario', $request->query('id_propietario'));
@@ -48,7 +48,7 @@ class PropiedadController extends Controller
                 return response()->json(['success' => false, 'message' => 'Usuario no encontrado.'], 404);
             }
             
-            $propiedades = Propiedad::with('tipoPropiedad')
+            $propiedades = Propiedad::with('tipoPropiedad', 'propietario')
                                       ->where('id_propietario', $userId)
                                       ->orderBy('created_at', 'desc')
                                       ->paginate($request->input('per_page', 12));
@@ -66,7 +66,7 @@ class PropiedadController extends Controller
      */
     public function show($id)
     {
-        $propiedad = Propiedad::with('tipoPropiedad')->find($id);
+        $propiedad = Propiedad::with('tipoPropiedad', 'propietario')->find($id);
 
         if (!$propiedad) {
             return response()->json(['success' => false, 'message' => 'Propiedad no encontrada'], 404);
@@ -140,33 +140,33 @@ class PropiedadController extends Controller
             }
 
             $validatedData = $request->validate([
-    'titulo'             => 'sometimes|required|string|max:255',
-    'descripcion'        => 'sometimes|required|string',
-    'direccion'          => 'sometimes|required|string|max:255',
-    'pais'               => 'sometimes|required|string|max:100',
-    'estado_ubicacion'   => 'sometimes|required|string|max:100',
-    'ciudad'             => 'sometimes|required|string|max:100',
-    'colonia'            => 'nullable|string|max:100',
-    'latitud'            => 'sometimes|required|numeric',
-    'longitud'           => 'sometimes|required|numeric',
-    'precio'             => 'sometimes|required|numeric|min:0',
-    'habitaciones'       => 'sometimes|required|integer|min:0',
-    'banos'              => 'sometimes|required|integer|min:0',
-    'metros_cuadrados'   => 'sometimes|required|integer|min:0',
-    'deposito'           => 'nullable|numeric',
-    'amueblado'          => 'sometimes|required|boolean',
-    'anualizado'         => 'sometimes|required|boolean',
-    'mascotas'           => 'sometimes|required|in:si,no',
-    'tipo_propiedad_id'  => 'sometimes|required|exists:tipos_propiedad,id',
-    'email'              => 'sometimes|required|email|max:255',
-    'telefono'           => 'sometimes|required|string|max:15',
-    'estado_propiedad'   => 'sometimes|required|string|in:Disponible,Rentada,Inactiva',
-    
-    // Fotos
-    'fotos'              => 'sometimes|array',
-    'fotos.*'            => 'sometimes|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-    'existing_fotos'     => 'sometimes|json',
-]);
+                'titulo'             => 'sometimes|required|string|max:255',
+                'descripcion'        => 'sometimes|required|string',
+                'direccion'          => 'sometimes|required|string|max:255',
+                'pais'               => 'sometimes|required|string|max:100',
+                'estado_ubicacion'   => 'sometimes|required|string|max:100',
+                'ciudad'             => 'sometimes|required|string|max:100',
+                'colonia'            => 'nullable|string|max:100',
+                'latitud'            => 'sometimes|required|numeric',
+                'longitud'           => 'sometimes|required|numeric',
+                'precio'             => 'sometimes|required|numeric|min:0',
+                'habitaciones'       => 'sometimes|required|integer|min:0',
+                'banos'              => 'sometimes|required|integer|min:0',
+                'metros_cuadrados'   => 'sometimes|required|integer|min:0',
+                'deposito'           => 'nullable|numeric',
+                'amueblado'          => 'sometimes|required|boolean',
+                'anualizado'         => 'sometimes|required|boolean',
+                'mascotas'           => 'sometimes|required|in:si,no',
+                'tipo_propiedad_id'  => 'sometimes|required|exists:tipos_propiedad,id',
+                'email'              => 'sometimes|required|email|max:255',
+                'telefono'           => 'sometimes|required|string|max:15',
+                'estado_propiedad'   => 'sometimes|required|string|in:Disponible,Rentada,Inactiva',
+                
+                // Fotos
+                'fotos'              => 'sometimes|array',
+                'fotos.*'            => 'sometimes|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+                'existing_fotos'     => 'sometimes|json',
+            ]);
 
 
             // --- Lógica para manejar la actualización de fotos ---
@@ -197,7 +197,7 @@ class PropiedadController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $propiedad->load('tipoPropiedad'),
+                'data' => $propiedad->load('tipoPropiedad', 'propietario'),
                 'message' => 'Propiedad actualizada exitosamente'
             ], 200);
 
