@@ -5,135 +5,213 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str; // Para generar nombres de archivo únicos si lo prefieres
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
+    //======================================================================
+    // ACCIÓN DEL USUARIO AUTENTICADO
+    //======================================================================
+
+    /**
+     * Devuelve los datos del usuario que realiza la petición.
+     * Corresponde a la ruta: GET /api/user
+     */
+    public function me(Request $request)
+    {
+        // $request->user() devuelve la instancia del modelo del usuario autenticado.
+        // Gracias al Accessor en el modelo User, la respuesta JSON ya incluirá 'avatar_url'.
+        return response()->json($request->user());
+    }
+
+
+    //======================================================================
+    // MÉTODOS CRUD ESTÁNDAR (Resource Controller)
+    //======================================================================
+
+    /**
+     * Muestra una lista paginada de todos los usuarios.
+     * Ruta: GET /api/users
+     */
     public function index()
     {
         $this->authorize('viewAny', User::class);
-        $users = User::all();
+        $users = User::paginate(15);
         return response()->json($users);
     }
 
-    public function show($id)
+    /**
+     * Muestra los detalles de un usuario específico.
+     * Ruta: GET /api/users/{user}
+     */
+    public function show(User $user)
     {
-        $user = User::findOrFail($id);
         $this->authorize('view', $user);
         return response()->json($user);
     }
 
-    public function update(Request $request, $id)
+    public function store(Request $request)
     {
-        $user = User::findOrFail($id);
+        // Primero, autorizamos si el usuario actual puede crear usuarios 
+        $this->authorize('create', User::class);
+
+        // Luego, validamos los datos de entrada
+        $validatedData = $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name_paternal' => 'required|string|max:255',
+            'last_name_maternal' => 'sometimes|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            // 'confirmed' asegura que el request incluya un campo 'password_confirmation' que coincida
+            'password' => 'required|string|min:8|confirmed',
+            'phone' => 'sometimes|string|max:20',
+        ]);
+        
+        // Hasheamos la contraseña antes de guardarla por seguridad
+        $validatedData['password'] = Hash::make($validatedData['password']);
+
+        // Creamos el usuario con los datos validados
+        $user = User::create($validatedData);
+
+        // Devolvemos el usuario recién creado con un código de estado 201 (Created)
+        return response()->json($user, 201);
+    }
+    /**
+     * Actualiza los datos de texto de un usuario específico.
+     * La actualización del avatar se hace en un método separado.
+     * Ruta: PUT /api/users/{user}
+     */
+    public function update(Request $request, User $user)
+    {
         $this->authorize('update', $user);
 
-        $validatedDataRules = [
+        $validatedData = $request->validate([
             'first_name' => 'sometimes|string|max:255',
             'last_name_paternal' => 'sometimes|string|max:255',
             'last_name_maternal' => 'sometimes|string|max:255',
             'phone' => 'sometimes|string|max:20',
-            'email' => 'sometimes|email|unique:users,email,'.$id,
-            'password' => 'sometimes|string|min:8|confirmed',
-            'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-        ];
-        $validatedData = $request->validate($validatedDataRules);
-
-        if ($request->hasFile('avatar')) {
-            $this->updateUserAvatar($user, $request->file('avatar'));
-            unset($validatedData['avatar']); 
-        }
-
-        if (!empty($validatedData['password'])) {
-            $validatedData['password'] = bcrypt($validatedData['password']);
-        } else {
-            unset($validatedData['password']);
-        }
-
-        if (count($validatedData) > 0) {
-            $user->update($validatedData);
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Perfil actualizado correctamente',
-            'user' => $user->fresh(),
-        ]);
-    }
-
-    public function updateProfilePicture(Request $request)
-    {
-        $user = Auth::user();
-        
-        $request->validate([
-            'profile_picture' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'email' => 'sometimes|email|unique:users,email,' . $user->id,
         ]);
 
-        if ($request->hasFile('profile_picture')) {
-            $this->updateUserAvatar($user, $request->file('profile_picture'));
-        }
+        $user->update($validatedData);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Foto de perfil actualizada correctamente',
-            'profile_picture_url' => $user->fresh()->avatar_url 
-        ]);
+        return response()->json($user);
     }
-
-    public function destroy($id)
-    {
-        $user = User::findOrFail($id);
-        $this->authorize('delete', $user);
-        
-        // El evento 'deleting' en tu modelo User debería encargarse de llamar a $user->deleteAvatar()
-        $user->delete(); 
-        
-        return response()->json(['message' => 'Usuario eliminado']);
-    }
-
-    
-    // En tu controlador, modifica el método updateUserAvatar:
-        private function updateUserAvatar(User $user, $imageFile)
+    public function updateOwnProfile(Request $request)
         {
-            // Eliminar avatar anterior si existe
+            $user = $request->user();
+
+            $validatedData = $request->validate([
+                'first_name' => 'sometimes|string|max:255',
+                'last_name_paternal' => 'sometimes|string|max:255',
+                'last_name_maternal' => 'sometimes|string|max:255',
+                'phone' => 'sometimes|string|max:20',
+                'email' => 'sometimes|email|unique:users,email,' . $user->id,
+            ]);
+
+            $user->update($validatedData);
+
+            return response()->json($user);
+        }
+
+    /**
+     * Elimina un usuario de la base de datos.
+     * Ruta: DELETE /api/users/{user}
+     */
+
+public function destroy(User $user)
+{
+    Log::info('Método destroy llamado para el usuario: ' . $user->id);
+
+    $user->delete();
+    
+    return response()->json(['message' => 'Usuario eliminado correctamente'], 200);
+}
+
+
+        public function deleteOwnAvatar(Request $request)
+        {
+            $user = $request->user();
+
+            // Elimina el archivo físico si existe
             if ($user->avatar) {
                 Storage::disk('public')->delete('avatars/' . $user->avatar);
             }
 
-            // Generar nombre único
-            $filename = Str::uuid() . '.' . $imageFile->getClientOriginalExtension();
+            // Limpia la referencia en BD
+            $user->avatar = null;
+            $user->save();
 
-            // Guardar en storage (asegúrate que la carpeta avatars existe)
-            $path = $imageFile->storeAs('public/avatars', $filename);
+            return response()->json(['message' => 'Avatar eliminado correctamente', 'user' => $user]);
+        }
 
-            // Actualizar base de datos
+    //======================================================================
+    // GESTIÓN DEL AVATAR
+    //======================================================================
+
+    /**
+     * Actualiza la foto de perfil (avatar) de un usuario.
+     * Ruta: POST /api/users/{user}/avatar
+     */
+    public function updateAvatar(Request $request, User $user)
+    {
+        // Lógica de roles/permisos
+        // if (Auth::id() !== $user->id && Auth::user()->role !== 'admin') { ... }
+
+        $request->validate(['avatar' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048']);
+
+        // Borramos el archivo físico anterior, si existe.
+        if ($user->avatar) {
+            Storage::disk('public')->delete('avatars/' . $user->avatar);
+        }
+
+        $file = $request->file('avatar');
+        $filename = Str::uuid() . "." . $file->getClientOriginalExtension();
+        $file->storeAs('public/avatars', $filename);
+
+        $user->avatar = $filename;
+        $user->save();
+        
+        return response()->json($user->fresh());
+    }
+        public function updateOwnAvatar(Request $request)
+        {
+            $user = $request->user();
+
+            $request->validate([
+                'avatar' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
+            ]);
+
+            if ($user->avatar) {
+                Storage::disk('public')->delete('avatars/' . $user->avatar);
+            }
+
+            $file = $request->file('avatar');
+            $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
+            $file->storeAs('public/avatars', $filename);
+
             $user->avatar = $filename;
             $user->save();
 
-            return $path; // Para debugging
+            return response()->json($user->fresh());
         }
-    // Elimina específicamente la foto de perfil
-        public function deleteProfilePicture($id)
+
+    /**
+     * Elimina la foto de perfil (avatar) de un usuario.
+     * Ruta: DELETE /api/users/{user}/avatar
+     */
+    public function deleteAvatar(User $user)
+    {
+        $user->deleteAvatar();
+
+        return response()->json($user->fresh());
+    }
+    public function deleteOwnProfile(Request $request)
 {
-    $user = User::findOrFail($id);
-    
-    // Verificación manual (sin políticas)
-    if (auth()->id() !== $user->id) {
-        abort(403, 'No tienes permiso para esta acción');
-    }
-
-    if ($user->avatar) {
-        Storage::disk('public')->delete('avatars/'.$user->avatar);
-        $user->avatar = null;
-        $user->save();
-    }
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Foto eliminada',
-        'avatar_url' => $user->avatar_url // URL de imagen por defecto
-    ]);
-}
+    $user = $request->user();
+    $user->delete();
+    return response()->json(['message' => 'Usuario eliminado correctamente'], 200);
 }
 
+}
