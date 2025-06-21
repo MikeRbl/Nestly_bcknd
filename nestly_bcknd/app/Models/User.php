@@ -99,4 +99,9 @@ class User extends Authenticatable
             $user->last_name_maternal = ucfirst(trim($user->last_name_maternal));
         });
     }
+    // Dentro de la clase User
+    public function resenasVotadas()
+    {
+        return $this->belongsToMany(Resena::class, 'resena_votos', 'user_id', 'resena_id');
+    }
 }
