@@ -71,4 +71,9 @@ class Propiedad extends Model
     {
         return $this->belongsTo(TipoPropiedad::class, 'tipo_propiedad_id');
     }
+
+    public function resenas()
+    {
+        return $this->hasMany(Resena::class, 'propiedad_id', 'id_propiedad');
+    }
 }
