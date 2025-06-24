@@ -14,12 +14,19 @@ class ResenaController extends Controller
     //* ================================ INDEX ======================================= */
     public function index(Propiedad $propiedad)
     {
-        $resenas = $propiedad->resenas()
-            ->with('user:id,first_name,last_name_paternal,avatar') // Carga los datos del usuario que hizo la reseña, incluyendo nombre y avatar
-            ->latest() // Ordena las reseñas de la más nueva a la más vieja
-            ->paginate(10); // Pagina los resultados para no sobrecargar la respuesta
+        $userId = Auth::id();
 
-        return response()->json($resenas);
+        $resenas = $propiedad->resenas()
+        ->with(['user:id,first_name,last_name_paternal,avatar', 'votantes']) 
+        ->latest()
+        ->get()
+        ->map(function ($resena) use ($userId) {
+            $resena->liked_by_current_user = $resena->votantes->contains($userId);
+            return $resena;
+        });
+        return response()->json([
+            'success' => true,
+            'data' => $resenas]);
     }
     //* ================================ INDEX ======================================= */
 
@@ -60,7 +67,26 @@ class ResenaController extends Controller
     }
 
     //* ================================ STORE ======================================= */
+    //* ================================ TOGGLE ======================================= */
+    
+    public function toggleVoto(Resena $resena)
+    {
+    $user = Auth::user();
 
+    if ($resena->votantes()->where('user_id', $user->id)->exists()) {
+        $resena->votantes()->detach($user->id); // Quitar el like
+        $liked = false;
+    } else {
+        $resena->votantes()->attach($user->id); // Dar like
+        $liked = true;
+    }
+    
+    return response()->json([
+        'votos_count' => $resena->votantes()->count(),
+        'liked_by_current_user' => $liked
+    ]);
+}
+    //* ================================ TOGGLE ======================================= */
 
     //* ================================ SHOW ======================================= */
     public function show(Resena $resena)

@@ -17,7 +17,10 @@ class PropiedadController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Propiedad::with('tipoPropiedad', 'propietario')->orderBy('created_at', 'desc');
+            $query = Propiedad::with('tipoPropiedad', 'propietario')
+                        ->withCount('resenas') 
+                        ->withAvg('resenas', 'puntuacion') 
+                        ->orderBy('created_at', 'desc');
 
             if ($request->has('id_propietario')) {
                 $query->where('id_propietario', $request->query('id_propietario'));

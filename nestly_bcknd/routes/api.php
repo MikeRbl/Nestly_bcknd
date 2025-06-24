@@ -12,7 +12,8 @@ use App\Http\Controllers\Api\ResenaVotoController;
 Route::post('login', [AuthController::class, 'login']);
 Route::post('register', [AuthController::class, 'register']);
 Route::get('/tipos-propiedad', [TipoPropiedadController::class, 'index']);
-
+Route::get('propiedades', [PropiedadController::class, 'index']);  
+Route::get('propiedades/{id}', [PropiedadController::class, 'show']);  
 // Rutas para usuarios autenticados (cualquier rol)
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -29,8 +30,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('user/avatar', [UserController::class, 'deleteOwnAvatar']);
     // Propiedades (para cualquier usuario autenticado)
     Route::post('propiedades', [PropiedadController::class, 'store']);  
-    Route::get('propiedades', [PropiedadController::class, 'index']);  
-    Route::get('propiedades/{id}', [PropiedadController::class, 'show']);  
+    
     Route::put('propiedades/{id}', [PropiedadController::class, 'update']);  
     Route::delete('propiedades/{id}', [PropiedadController::class, 'destroy']); 
     Route::get('users/{user}/propiedades', [PropiedadController::class, 'indexByUser']);
