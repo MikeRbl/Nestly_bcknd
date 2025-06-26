@@ -104,4 +104,8 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Resena::class, 'resena_votos', 'user_id', 'resena_id');
     }
+    public function favoritos()
+    {
+        return $this->hasMany(Favoritos::class, 'user_id', 'id');
+    }
 }

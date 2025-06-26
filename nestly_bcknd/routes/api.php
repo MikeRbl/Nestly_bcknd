@@ -6,6 +6,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\PropiedadController;  
 use App\Http\Controllers\Api\TipoPropiedadController;
 use App\Http\Controllers\ResenaController;
+use App\Http\Controllers\FavoritosController;
 use App\Http\Controllers\Api\ResenaVotoController;
 
 // Rutas públicas (sin autenticación)
@@ -42,6 +43,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('resenas/{resena}', [ResenaController::class, 'update']);
     Route::delete('resenas/{resena}', [ResenaController::class, 'destroy']);
     Route::post('resenas/{resena}/voto', [ResenaVotoController::class, 'toggle']);
+
+    // Favoritos
+    Route::get('/favoritos', [FavoritosController::class, 'index']);
+    Route::get('/favoritos/ids', [FavoritosController::class, 'indexIds']);
+    Route::post('/favoritos/agregar/{propiedadId}', [FavoritosController::class, 'store']);
+    Route::delete('/favoritos/quitar/{propiedadId}', [FavoritosController::class, 'destroy']);
+    
 });
 
 // Rutas exclusivas para admins

@@ -76,4 +76,8 @@ class Propiedad extends Model
     {
         return $this->hasMany(Resena::class, 'propiedad_id', 'id_propiedad');
     }
+    public function favoritos()
+    {
+        return $this->hasMany(Favoritos::class, 'propiedad_id', 'id_propiedad');
+    }
 }
