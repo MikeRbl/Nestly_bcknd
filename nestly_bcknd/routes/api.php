@@ -39,6 +39,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Reseñas
     Route::get('propiedades/{propiedad}/resenas', [ResenaController::class, 'index']);
     Route::post('propiedades/{propiedad}/resenas', [ResenaController::class, 'store']);
+    Route::get('/resenas/liked-ids', [ResenaController::class, 'getLikedIds']);
     Route::get('resenas/{resena}', [ResenaController::class, 'show']);
     Route::put('resenas/{resena}', [ResenaController::class, 'update']);
     Route::delete('resenas/{resena}', [ResenaController::class, 'destroy']);

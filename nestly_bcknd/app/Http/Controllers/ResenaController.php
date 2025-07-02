@@ -150,4 +150,19 @@ class ResenaController extends Controller
         return response()->noContent(); // 204 No Content
     }
     //* ================================ DESTROY ======================================= */
+        public function getLikedIds(Request $request)
+    {
+        $userId = Auth::id();
+
+        if (!$userId) {
+            return response()->json(['data' => []]);
+        }
+        $likedIds = DB::table('resena_votos') 
+                        ->where('user_id', $userId)
+                        ->pluck('resena_id');
+
+        return response()->json([
+            'data' => $likedIds
+        ]);
+    }
 }
