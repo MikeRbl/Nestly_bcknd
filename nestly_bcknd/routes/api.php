@@ -49,7 +49,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/favoritos/ids', [FavoritosController::class, 'indexIds']);
     Route::post('/favoritos/agregar/{propiedadId}', [FavoritosController::class, 'store']);
     Route::delete('/favoritos/quitar/{propiedadId}', [FavoritosController::class, 'destroy']);
+
+    //Pagar propiedad
+    Route::put('propiedades/{id}', [PropiedadController::class, 'update']); // Esta ya la tienes
+    Route::delete('propiedades/{id}', [PropiedadController::class, 'destroy']); // Esta ya la tienes
     
+    Route::put('/propiedades/{propiedad}/estado', [PropiedadController::class, 'actualizarEstado']);
 });
 
 // Rutas exclusivas para admins

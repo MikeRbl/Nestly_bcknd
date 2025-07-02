@@ -237,4 +237,20 @@ class PropiedadController extends Controller
             return response()->json(['success' => false, 'message' => 'Error del servidor al eliminar la propiedad.'], 500);
         }
     }
+
+    public function actualizarEstado(Request $request, Propiedad $propiedad)
+{
+    $request->validate([
+        'estado_propiedad' => 'required|string|in:Disponible,Alquilada,Inactiva',
+    ]);
+
+    $propiedad->estado_propiedad = $request->input('estado_propiedad');
+    $propiedad->save();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Estado de la propiedad actualizado correctamente.',
+        'data' => $propiedad
+    ]);
+}
 }
