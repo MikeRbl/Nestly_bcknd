@@ -66,6 +66,13 @@ class UserPolicy
     {
         return $user->role === 'admin';
     }
+    /**
+     * Determine whether the user can update the status (ban/unban) of the model.
+     */
+    public function updateStatus(User $user, User $model)
+    {
+        return $user->role === 'admin';
+    }
 
     /**
      * Determine whether the user can restore the model.

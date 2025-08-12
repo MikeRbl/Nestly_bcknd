@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
-
+use Illuminate\Support\Facades\Log;
 class CheckRole
 {
     /**
@@ -20,6 +20,8 @@ class CheckRole
     {
         // Esto detendrá la API y nos mostrará el rol del usuario y los roles permitidos.
         //dd(Auth::user()->role, $roles);
+       Log::info('Solicitud para eliminar al usuario:', ['user' => Auth::user()]);
+
 
      
         $actualRole = strtolower(trim(Auth::user()->role));
