@@ -62,7 +62,7 @@ class User extends Authenticatable
         {
             if (!$this->avatar) {
                 
-                return asset('storage/avatars/usuario.png');
+                return asset('storage/avatars/default-profile.png');
             }
             
             return asset('storage/avatars/'.$this->avatar);
