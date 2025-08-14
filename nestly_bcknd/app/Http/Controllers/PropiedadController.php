@@ -253,18 +253,4 @@ class PropiedadController extends Controller
         'data' => $propiedad
     ]);
 }
-
-public function obtenerRentadasPorUsuario()
-{
-    $userId = Auth::id();
-
-    $propiedades = Propiedad::where('estado_propiedad', 'rentada')
-        ->where('id_propietario', $userId)
-        ->orderBy('created_at', 'desc')
-        ->get();
-
-    return response()->json($propiedades);
-}
-
-
 }
