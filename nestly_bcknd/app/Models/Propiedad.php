@@ -80,4 +80,9 @@ class Propiedad extends Model
     {
         return $this->hasMany(Favoritos::class, 'propiedad_id', 'id_propiedad');
     }
+ 
+public function propiedad()
+{
+    return $this->belongsTo(Propiedad::class);
+}
 }

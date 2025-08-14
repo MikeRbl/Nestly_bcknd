@@ -4,43 +4,70 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
 
 class Renta extends Model
 {
     use HasFactory;
 
+
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'rentas';
+
+    /**
+     * The primary key for the model.
+     *
+     * @var string
+     */
+    protected $primaryKey = 'id';
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
     protected $fillable = [
+        'user_id',
         'propiedad_id',
-        'inquilino_id',
-        'propietario_id',
         'fecha_inicio',
         'fecha_fin',
-        'monto_mensual',
+        'monto',
+        'deposito',
         'estado',
+        'metodo_pago'
     ];
 
     /**
-     * Una renta pertenece a una propiedad.
+     * The attributes that should be cast.
+     *
+     * @var array
      */
-    public function propiedad(): BelongsTo
+    protected $casts = [
+        'fecha_inicio' => 'date',
+        'fecha_fin' => 'date',
+        'monto' => 'decimal:2',
+        'deposito' => 'decimal:2',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime'
+    ];
+
+    /**
+     * Get the user that owns the renta.
+     */
+    public function user()
     {
-        return $this->belongsTo(Propiedad::class);
+        return $this->belongsTo(User::class);
     }
 
     /**
-     * Una renta pertenece a un inquilino (un usuario).
+     * Get the propiedad that owns the renta.
      */
-    public function inquilino(): BelongsTo
+    public function propiedad()
     {
-        return $this->belongsTo(User::class, 'inquilino_id');
-    }
-
-    /**
-     * Una renta pertenece a un propietario (un usuario).
-     */
-    public function propietario(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'propietario_id');
+        return $this->belongsTo(Propiedad::class, 'propiedad_id', 'id_propiedad');
     }
 }
