@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\TipoPropiedadController;
 use App\Http\Controllers\ResenaController;
 use App\Http\Controllers\FavoritosController;
 use App\Http\Controllers\Api\ResenaVotoController;
+use App\Http\Controllers\Api\RentaController;
+
 
 // Rutas públicas (sin autenticación)
 Route::post('login', [AuthController::class, 'login']);
@@ -56,6 +58,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('propiedades/{id}', [PropiedadController::class, 'destroy']); // Esta ya la tienes
     
     Route::put('/propiedades/{propiedad}/estado', [PropiedadController::class, 'actualizarEstado']);
+
+
+     // =============================================
+    // NUEVAS RUTAS PARA RENTAS
+    // =============================================
+   Route::get('rentas', [RentaController::class, 'index']);
+    Route::get('rentas/{renta}', [RentaController::class, 'show']);
+    Route::post('rentas', [RentaController::class, 'store']);
+    Route::put('rentas/{renta}', [RentaController::class, 'update']);
+    Route::delete('rentas/{renta}', [RentaController::class, 'destroy']);
+    
+    // Rutas especiales
+    Route::get('users/{user}/rentas', [RentaController::class, 'rentasPorUsuario']);
+    Route::get('propiedades/{propiedad}/rentas', [RentaController::class, 'rentasPorPropiedad']);
 });
 
 // Rutas exclusivas para admins

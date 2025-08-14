@@ -108,4 +108,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Favoritos::class, 'user_id', 'id');
     }
+
+    public function rentas()
+{
+    return $this->hasMany(Renta::class);
+}
 }
