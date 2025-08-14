@@ -13,7 +13,6 @@ return new class extends Migration
             $table->foreignId('reportador_id')->constrained('users')->onDelete('cascade');
             $table->morphs('reportable'); // Para reportar usuarios, reseñas, etc.
             
-            // --- CAMBIO AQUÍ ---
             // Usamos un enum para los motivos predefinidos.
             $table->enum('motivo', [
                 'Spam', 
