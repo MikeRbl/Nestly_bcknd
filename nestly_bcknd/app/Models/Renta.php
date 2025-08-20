@@ -5,11 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-
 class Renta extends Model
 {
     use HasFactory;
-
 
     /**
      * The table associated with the model.
@@ -61,6 +59,15 @@ class Renta extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the inquilino (user) that owns the renta.
+     * Esto es un alias de la relación user() para mayor claridad
+     */
+    public function inquilino()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     /**

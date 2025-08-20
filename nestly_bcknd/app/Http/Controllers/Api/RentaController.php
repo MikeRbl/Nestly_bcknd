@@ -19,7 +19,7 @@ class RentaController extends Controller
     public function index()
     {
         // Obtiene solo las rentas del usuario autenticado
-        return Renta::with(['user', 'propiedad'])
+        return Renta::with(['inquilino', 'propiedad'])
             ->where('user_id', auth()->id())
             ->orderBy('fecha_inicio', 'desc')
             ->get();
@@ -123,7 +123,7 @@ class RentaController extends Controller
      */
     public function show($id)
     {
-        $renta = Renta::with(['user', 'propiedad'])
+        $renta = Renta::with(['inquilino', 'propiedad'])
             ->where('id', $id)
             ->where('user_id', auth()->id())
             ->firstOrFail();
@@ -198,24 +198,18 @@ class RentaController extends Controller
      */
    public function rentasPorUsuario($userId)
 {
-    try {
-        if (auth()->id() != $userId) {
-            return response()->json(['message' => 'No autorizado'], 403);
-        }
-
-        // Carga solo la propiedad sin las fotos
-        $rentas = Renta::with('propiedad')
-            ->where('user_id', $userId)
-            ->orderBy('fecha_inicio', 'desc')
-            ->get();
-
+   $rentas = Renta::where('user_id', $userId)
+                    ->with(['propiedad', 'inquilino']) // ← Relación corregida
+                    ->orderBy('fecha_inicio', 'desc')
+                    ->get();
+        
         return response()->json($rentas);
-    } catch (\Exception $e) {
-        return response()->json([
-            'message' => 'Error al obtener las rentas',
-            'error' => $e->getMessage()
-        ], 500);
-    }
+}
+
+// En el modelo Renta.php
+public function inquilino()
+{
+    return $this->belongsTo(User::class, 'user_id');
 }
     /**
      * Obtiene el historial de rentas de una propiedad
@@ -224,7 +218,7 @@ class RentaController extends Controller
     {
         $this->authorize('viewAny', Renta::class);
         
-        return Renta::with('user')
+        return Renta::with('inquilino')
             ->where('propiedad_id', $propiedadId)
             ->orderBy('fecha_inicio', 'desc')
             ->get();
