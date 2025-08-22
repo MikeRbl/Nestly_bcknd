@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Propiedad;
 use App\Models\User;
+use App\Models\Renta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -253,4 +254,34 @@ class PropiedadController extends Controller
         'data' => $propiedad
     ]);
 }
+
+    /**
+     * Crea un nuevo registro de renta para una propiedad.
+     */
+    public function rentarPropiedad(Request $request, Propiedad $propiedad)
+    {
+        $validatedData = $request->validate([
+            'start_date' => 'required|date|after_or_equal:today',
+            'end_date'   => 'required|date|after:start_date',
+            'total_paid' => 'required|numeric|min:0',
+        ]);
+
+        $renta = Renta::create([
+            'propiedad_id'   => $propiedad->id_propiedad,
+            'user_id'        => auth()->id(), // Usamos user_id como en tu modelo
+            'fecha_inicio'   => $validatedData['start_date'],
+            'fecha_fin'      => $validatedData['end_date'],
+            'monto'          => $validatedData['total_paid'],
+            'estado'         => 'Activa',
+        ]);
+
+        $propiedad->estado_propiedad = 'Alquilada';
+        $propiedad->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Propiedad rentada exitosamente.',
+            'data' => $renta
+        ], 201);
+    }
 }
