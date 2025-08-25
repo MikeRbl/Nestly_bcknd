@@ -23,10 +23,10 @@ class Reporte extends Model
     /**
      * Usuario que hizo el reporte
      */
-    public function reportador(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'reportador_id');
-    }
+    public function reportador()
+{
+    return $this->belongsTo(User::class, 'reportador_id');
+}
 
     /**
      * Relación polimórfica al recurso reportado (usuario, propiedad o reseña)
@@ -35,4 +35,5 @@ class Reporte extends Model
     {
         return $this->morphTo();
     }
+
 }

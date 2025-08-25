@@ -5,45 +5,37 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Propiedad;
 use App\Models\Renta;
+use App\Models\RoleRequest;
+use App\Models\Reporte;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class AdminDashboardController extends Controller
 {
     /**
-     * Devuelve los datos para el dashboard del administrador.
+     * Obtiene todos los datos necesarios para el dashboard del administrador.
      */
-    public function getDashboardData(): JsonResponse
+    public function getDashboardData(Request $request): JsonResponse
     {
-        // Estadísticas principales
-        $totalUsers = User::count();
-        $activeProperties = Propiedad::where('estado_propiedad', 'Disponible')->count();
-        $currentRents = Renta::where('estado', 'activa')->count();
-        $monthlyIncome = Renta::where('estado', 'activa')->sum('monto_mensual');
+        // 1. Calcula el ingreso mensual y guárdalo en una variable
+        $monthlyIncome = Renta::where('estado', 'activa')
+                              ->whereMonth('fecha_inicio', now()->month)
+                              ->sum('monto');
 
-        // Datos para gráfico de usuarios últimos 6 meses
-        $userChartData = User::select(
-                DB::raw('YEAR(created_at) as year'),
-                DB::raw('MONTH(created_at) as month'),
-                DB::raw('COUNT(*) as count')
-            )
-            ->where('created_at', '>=', Carbon::now()->subMonths(6))
-            ->groupBy('year', 'month')
-            ->orderBy('year', 'asc')
-            ->orderBy('month', 'asc')
-            ->get();
+        $stats = [
+            'total_users' => User::count(),
+            'active_properties' => Propiedad::where('estado_propiedad', 'Disponible')->count(),
+            'current_rents' => Renta::where('estado', 'activa')->count(),
+            // 2. Usa la variable aquí
+            'monthly_income' => $monthlyIncome,
+            // 3. Y úsala de nuevo aquí para calcular las ganancias
+            'monthly_earnings' => $monthlyIncome * 0.10,
+            'pending_role_requests' => RoleRequest::where('status', 'pendiente')->count(),
+            'unresolved_reports' => Reporte::where('estado', 'pendiente')->count(),
+        ];
 
-        // Formatear labels con meses en español
-        $chartLabels = $userChartData->map(function ($item) {
-            return Carbon::createFromDate($item->year, $item->month, 1)
-                ->locale('es')
-                ->isoFormat('MMMM');
-        });
-
-        $chartValues = $userChartData->pluck('count');
-
-        // Últimas actividades: usuarios y propiedades
+        // --- OBTENCIÓN DE ACTIVIDAD RECIENTE ---
         $recentUsers = User::latest()->take(3)->get()->map(function ($user) {
             return [
                 'type' => 'Nuevo Usuario',
@@ -53,32 +45,25 @@ class AdminDashboardController extends Controller
         });
 
         $recentProperties = Propiedad::with('propietario')->latest()->take(3)->get()->map(function ($propiedad) {
+            // Asegurarse de que el propietario existe para evitar errores
+            $ownerName = $propiedad->propietario ? $propiedad->propietario->first_name : 'un propietario';
             return [
                 'type' => 'Nueva Propiedad',
-                'message' => "{$propiedad->propietario->first_name} publicó \"{$propiedad->titulo}\".",
+                'message' => "{$ownerName} publicó \"{$propiedad->titulo}\".",
                 'timestamp' => $propiedad->created_at
             ];
         });
 
-        // Combinar, ordenar y tomar solo 5 actividades más recientes
+        // Combinar, ordenar por fecha y tomar las 5 actividades más recientes
         $recentActivities = $recentUsers
             ->concat($recentProperties)
             ->sortByDesc('timestamp')
             ->take(5)
             ->values();
 
-        // Respuesta JSON con código HTTP 200 OK
+        // --- RESPUESTA FINAL ---
         return response()->json([
-            'stats' => [
-                'total_users' => $totalUsers,
-                'active_properties' => $activeProperties,
-                'current_rents' => $currentRents,
-                'monthly_income' => $monthlyIncome,
-            ],
-            'user_chart' => [
-                'labels' => $chartLabels,
-                'values' => $chartValues,
-            ],
+            'stats' => $stats,
             'recent_activities' => $recentActivities,
         ], 200);
     }

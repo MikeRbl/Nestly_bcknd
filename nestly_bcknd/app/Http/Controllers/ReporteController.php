@@ -15,13 +15,19 @@ class ReporteController extends Controller
     {
         $this->authorize('viewAny', Reporte::class);
 
-        $query = Reporte::query();
+        $query = Reporte::with(['reportador', 'reportable']);
 
         // Filtro por estado (pendiente, descartado, resuelto)
         if ($request->filled('estado')) {
             $query->where('estado', $request->estado);
         }
 
+        $query->when($request->reportable_type, function ($q, $type) {
+            // Construye el namespace completo del modelo
+            $modelType = 'App\\Models\\' . $type;
+            $q->where('reportable_type', $modelType);
+        });
+        
         // Filtro por motivo
         if ($request->filled('motivo')) {
             $query->where('motivo', 'like', '%'.$request->motivo.'%');

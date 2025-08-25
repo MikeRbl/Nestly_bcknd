@@ -4,12 +4,14 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, Notifiable;
+    use HasApiTokens, Notifiable, SoftDeletes;
 
     protected $fillable = [
         'first_name',
@@ -17,9 +19,11 @@ class User extends Authenticatable
         'last_name_maternal',
         'phone',
         'role',
+        'status',
         'email',
         'password',
         'avatar',
+        'suspension_ends_at',
     ];
 
     protected $hidden = [
@@ -31,11 +35,13 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'created_at' => 'datetime:Y-m-d H:i:s',
         'updated_at' => 'datetime:Y-m-d H:i:s',
+        'suspension_ends_at' => 'datetime',
     ];
 
     protected $appends = [
         'full_name',
-        'avatar_url'
+        'avatar_url',
+        'profile_complete'
     ];
 
     // Relación con Propiedades
@@ -69,36 +75,30 @@ class User extends Authenticatable
         }
 
     // Método para eliminar el avatar
-    public function deleteAvatar()
+ public function deleteAvatar()
 {
     if ($this->avatar) {
-        // Elimina el archivo físico 
         Storage::disk('public')->delete('avatars/'.$this->avatar);
-        
-        // Limpia el campo en la BD
         $this->avatar = null;
-        $this->save();
+        $this->save(); // <-- El save() es necesario aquí ahora
     }
 }
 
     // Eventos del modelo
-    protected static function boot()
-    {
-        parent::boot();
+   protected static function boot()
+{
+    parent::boot();
 
-        // Eliminar avatar cuando se elimina el usuario
-        static::deleting(function ($user) {
-            $user->deleteAvatar();
-        });
+    // static::deleting(...); // <-- ELIMINA O COMENTA TODO ESTE BLOQUE
 
-        // Limpiar datos antes de guardar
-        static::saving(function ($user) {
-            $user->email = strtolower(trim($user->email));
-            $user->first_name = ucfirst(trim($user->first_name));
-            $user->last_name_paternal = ucfirst(trim($user->last_name_paternal));
-            $user->last_name_maternal = ucfirst(trim($user->last_name_maternal));
-        });
-    }
+    // El evento 'saving' se queda como está
+    static::saving(function ($user) {
+        $user->email = strtolower(trim($user->email));
+        $user->first_name = ucfirst(trim($user->first_name));
+        $user->last_name_paternal = ucfirst(trim($user->last_name_paternal));
+        $user->last_name_maternal = ucfirst(trim($user->last_name_maternal));
+    });
+}
     // Dentro de la clase User
     public function resenasVotadas()
     {
@@ -110,7 +110,21 @@ class User extends Authenticatable
     }
 
     public function rentas()
-{
-    return $this->hasMany(Renta::class);
-}
+    {
+        return $this->hasMany(Renta::class);
+    }
+    public function roleRequests(): HasMany
+    {
+        return $this->hasMany(RoleRequest::class);
+    }
+    protected function profileComplete(): Attribute
+    {
+        return Attribute::make(
+            get: fn () =>
+                !empty($this->first_name) &&
+                !empty($this->last_name_paternal) &&
+                !empty($this->phone) &&
+                !empty($this->avatar)
+        );
+    }
 }
