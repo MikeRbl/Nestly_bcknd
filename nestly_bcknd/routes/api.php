@@ -11,15 +11,18 @@ use App\Http\Controllers\Api\ResenaVotoController;
 use App\Http\Controllers\Api\RentaController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\ReporteController;
-use App\Http\Controllers\RoleRequestController; 
-use Illuminate\Foundation\Auth\EmailVerificationRequest; 
+use App\Http\Controllers\RoleRequestController;
+use App\Http\Controllers\TestimonioController;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
+
 // Rutas públicas (sin autenticación)
 Route::post('login', [AuthController::class, 'login']);
 Route::post('register', [AuthController::class, 'register']);
 Route::get('/tipos-propiedad', [TipoPropiedadController::class, 'index']);
 Route::get('propiedades', [PropiedadController::class, 'index']);
 Route::get('propiedades/{id}', [PropiedadController::class, 'show']);
+Route::get('testimonios', [TestimonioController::class, 'index']);
 
 // Rutas para usuarios autenticados (cualquier rol)
 Route::middleware('auth:sanctum', 'check.user.status')->group(function () {
@@ -35,8 +38,14 @@ Route::middleware('auth:sanctum', 'check.user.status')->group(function () {
     Route::delete('user/avatar', [UserController::class, 'deleteOwnAvatar']);
     Route::delete('user/account', [UserController::class, 'destroyOwnAccount']);
 
+    // Solicitudes de Rol
     Route::post('role-requests', [RoleRequestController::class, 'store']);
 
+    // Testimonios
+    Route::post('testimonios', [TestimonioController::class, 'store']);
+    Route::put('testimonios/{testimonio}', [TestimonioController::class, 'update']);
+    Route::delete('testimonios/{testimonio}', [TestimonioController::class, 'destroy']);
+    
     // Propiedades (para cualquier usuario autenticado)
     Route::post('propiedades', [PropiedadController::class, 'store']);
     Route::put('propiedades/{id}', [PropiedadController::class, 'update']);
@@ -45,10 +54,11 @@ Route::middleware('auth:sanctum', 'check.user.status')->group(function () {
     Route::put('/propiedades/{propiedad}/estado', [PropiedadController::class, 'actualizarEstado']);
     Route::get('propiedades/rentadas/mias', [PropiedadController::class, 'obtenerRentadasPorUsuario']);
 
+    // Verificación de Email
     Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-    $request->fulfill();
-    return response()->json(['message' => 'Correo verificado exitosamente.']);
-})->middleware(['auth:sanctum', 'signed'])->name('verification.verify');
+        $request->fulfill();
+        return response()->json(['message' => 'Correo verificado exitosamente.']);
+    })->middleware(['auth:sanctum', 'signed'])->name('verification.verify');
 
     // Reseñas
     Route::get('propiedades/{propiedad}/resenas', [ResenaController::class, 'index']);
@@ -92,9 +102,10 @@ Route::middleware(['auth:sanctum', 'check.role:admin'])->group(function () {
     Route::delete('users/{id}', [UserController::class, 'destroy']);
     Route::put('users/{user}/role', [UserController::class, 'updateRole']);
     Route::put('users/{user}/status', [UserController::class, 'updateStatus']);
-    // Gestión de solicitudes de rol (Las que ya tenías)
-    Route::get('role-requests', [RoleRequestController::class, 'index']); // Ver todas las solicitudes
-    Route::put('role-requests/{roleRequest}', [RoleRequestController::class, 'update']); // Aprobar/Rechazar
+    
+    // Gestión de solicitudes de rol
+    Route::get('role-requests', [RoleRequestController::class, 'index']);
+    Route::put('role-requests/{roleRequest}', [RoleRequestController::class, 'update']);
 
     // Gestión de Reportes
     Route::get('/reportes', [ReporteController::class, 'index']);
