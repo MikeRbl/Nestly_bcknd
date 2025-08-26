@@ -104,7 +104,7 @@ class PropiedadController extends Controller
             'email'             => 'required|email|max:255',
             'telefono'          => 'required|string|max:15',
             'fotos'             => 'required|array',
-            'fotos.*'           => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048'
+            'fotos.*'           => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048'
         ]);
 
         $photoPaths = [];
@@ -168,7 +168,7 @@ class PropiedadController extends Controller
                 
                 // Fotos
                 'fotos'              => 'sometimes|array',
-                'fotos.*'            => 'sometimes|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+                'fotos.*'            => 'sometimes|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
                 'existing_fotos'     => 'sometimes|json',
             ]);
 
