@@ -9,6 +9,20 @@ use Illuminate\Support\Facades\DB;
 
 class RoleRequestController extends Controller
 {
+    public function index(Request $request)
+{
+    $perPage = $request->input('limit', 15); // Default a 15 si no se especifica
+    $page = $request->input('page', 1);
+    
+    $requests = RoleRequest::with('user')
+        ->orderByDesc('created_at')
+        ->paginate($perPage, ['*'], 'page', $page);
+    
+    return response()->json([
+        'data' => $requests->items(),
+        'total' => $requests->total()
+    ]);
+}
     // Usuario crea una solicitud
     public function store(Request $request)
     {
@@ -67,10 +81,22 @@ class RoleRequestController extends Controller
     return response()->json($roleRequest);
 }
 
-    // Admin lista todas las solicitudes
-    public function index()
+    public function checkStatus(Request $request)
     {
-        $requests = RoleRequest::with('user')->orderByDesc('created_at')->get();
-        return response()->json($requests);
+        $user = $request->user();
+        
+        $pendingRequest = RoleRequest::where('user_id', $user->id)
+            ->where('status', 'pendiente')
+            ->first();
+        
+        if ($pendingRequest) {
+            return response()->json(['status' => 'pendiente']);
+        }
+        
+        if ($user->role === 'propietario') {
+            return response()->json(['status' => 'aprobado']);
+        }
+        
+        return response()->json(['status' => 'ninguna']);
     }
 }
