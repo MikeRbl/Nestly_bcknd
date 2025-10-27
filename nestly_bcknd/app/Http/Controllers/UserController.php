@@ -160,6 +160,39 @@ public function index(Request $request)
     /**
      * El usuario autenticado actualiza su propio avatar.
      */
+    public function updateOwnProfile(Request $request)
+{
+    $user = auth()->user();
+
+    $validatedData = $request->validate([
+        'first_name' => 'required|string|max:255',
+        'last_name_paternal' => 'required|string|max:255',
+        'last_name_maternal' => 'required|string|max:255',
+        'phone' => ['required', 'string', 'regex:/^[0-9]{10}$/'],
+        'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+        'password' => ['nullable', 'string', Password::min(6)],
+        'password_confirmation' => ['nullable', 'same:password'],
+    ]);
+
+    // Actualiza los campos básicos
+    $user->first_name = $validatedData['first_name'];
+    $user->last_name_paternal = $validatedData['last_name_paternal'];
+    $user->last_name_maternal = $validatedData['last_name_maternal'];
+    $user->phone = $validatedData['phone'];
+    $user->email = $validatedData['email'];
+
+    // Actualiza la contraseña si se proporciona
+    if (!empty($validatedData['password'])) {
+        $user->password = Hash::make($validatedData['password']);
+    }
+
+    $user->save();
+
+    return response()->json([
+        'message' => 'Perfil actualizado correctamente.',
+        'user' => $user->fresh()
+    ]);
+}
     public function updateOwnAvatar(Request $request)
     {
         $request->validate([

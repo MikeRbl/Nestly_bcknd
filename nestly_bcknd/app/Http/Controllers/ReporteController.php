@@ -82,7 +82,8 @@ class ReporteController extends Controller
     {
         $user = $request->user();
         $validated = $request->validate([
-            'reportable_type' => 'required|string|in:App\Models\User,App\Models\Propiedad,App\Models\Resena',
+            
+            'reportable_type' => 'required|string|in:App\Models\User,App\Models\Propiedad,App\Models\Resena,App\Models\Testimonio',
             'reportable_id' => 'required|integer',
             'motivo' => 'required|string|max:255',
             'descripcion' => 'nullable|string',
