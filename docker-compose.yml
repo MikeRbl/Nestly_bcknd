@@ -16,7 +16,7 @@ services:
       - nestly-network
 
   phpmyadmin:
-    image: phpmyadmin
+    image: phpmyadmin:latest
     container_name: nestly-phpmyadmin
     restart: always
     ports:
