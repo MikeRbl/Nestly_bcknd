@@ -35,7 +35,7 @@ class AuthController extends Controller
             'phone' => $validatedData['phone'],
             'email' => $validatedData['email'],
             'password' => Hash::make($validatedData['password']),
-            'role' => 'inquilino', // Asignar rol por defecto
+            'role' => 'propietario', // Asignar rol por defecto
         ]);
 
         // 3. Devolver una respuesta exitosa

@@ -95,8 +95,8 @@ public function index(Request $request)
         $validatedData = $request->validate([
             'first_name' => 'sometimes|string|max:255',
             'last_name_paternal' => 'sometimes|string|max:255',
-            'last_name_maternal' => 'sometimes|string|max:255',
-            'phone' => ['sometimes', 'string', 'regex:/^[0-9]{10}$/'],
+            'last_name_maternal' => 'sometimes|nullable|string|max:255',
+            'phone' => ['sometimes', 'nullable', 'string', 'regex:/^[0-9]{10}$/'],
             'email' => 'sometimes|string|email|max:255|unique:users,email,' . $user->id,
             'role' => 'sometimes|string|in:admin,propietario,inquilino',
         ]);
@@ -160,39 +160,42 @@ public function index(Request $request)
     /**
      * El usuario autenticado actualiza su propio avatar.
      */
-    public function updateOwnProfile(Request $request)
-{
-    $user = auth()->user();
+   public function updateOwnProfile(Request $request)
+    {
+        $user = $request->user();
 
-    $validatedData = $request->validate([
-        'first_name' => 'required|string|max:255',
-        'last_name_paternal' => 'required|string|max:255',
-        'last_name_maternal' => 'required|string|max:255',
-        'phone' => ['required', 'string', 'regex:/^[0-9]{10}$/'],
-        'email' => 'required|email|max:255|unique:users,email,' . $user->id,
-        'password' => ['nullable', 'string', Password::min(6)],
-        'password_confirmation' => ['nullable', 'same:password'],
-    ]);
+        // 1. Validamos SOLO lo que el frontend decida enviar (gracias a 'sometimes')
+        $validatedData = $request->validate([
+            'first_name'            => 'sometimes|required|string|max:255',
+            'last_name_paternal'    => 'sometimes|nullable|string|max:255',
+            'last_name_maternal'    => 'sometimes|nullable|string|max:255',
+            'phone'                 => ['sometimes', 'nullable', 'string', 'regex:/^[0-9]{10}$/'],
+            'email'                 => 'sometimes|required|email|max:255|unique:users,email,' . $user->id,
+            
+            // En tu frontend bloqueas si es menor a 8, así que lo alineamos aquí también
+            'password'              => 'sometimes|nullable|string|min:8', 
+            'password_confirmation' => 'sometimes|nullable|same:password',
+        ]);
 
-    // Actualiza los campos básicos
-    $user->first_name = $validatedData['first_name'];
-    $user->last_name_paternal = $validatedData['last_name_paternal'];
-    $user->last_name_maternal = $validatedData['last_name_maternal'];
-    $user->phone = $validatedData['phone'];
-    $user->email = $validatedData['email'];
+        // 2. Si el usuario envió una contraseña nueva, la encriptamos
+        if (!empty($validatedData['password'])) {
+            $validatedData['password'] = \Illuminate\Support\Facades\Hash::make($validatedData['password']);
+        } else {
+            // Si viene vacía, la quitamos del array para no borrar la actual por error
+            unset($validatedData['password']);
+        }
+        
+        // Limpiamos el campo de confirmación para que no intente guardarlo en la base de datos
+        unset($validatedData['password_confirmation']);
 
-    // Actualiza la contraseña si se proporciona
-    if (!empty($validatedData['password'])) {
-        $user->password = Hash::make($validatedData['password']);
+        // 3. Actualizamos solo los campos que vinieron en $validatedData
+        $user->update($validatedData);
+
+        return response()->json([
+            'message' => 'Perfil actualizado correctamente.',
+            'user' => $user->fresh()
+        ]);
     }
-
-    $user->save();
-
-    return response()->json([
-        'message' => 'Perfil actualizado correctamente.',
-        'user' => $user->fresh()
-    ]);
-}
     public function updateOwnAvatar(Request $request)
     {
         $request->validate([
