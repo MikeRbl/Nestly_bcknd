@@ -21,17 +21,17 @@ class AuthController extends Controller
         $validatedData = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name_paternal' => 'required|string|max:255',
-            'last_name_maternal' => 'required|string|max:255',
+            'last_name_maternal' => 'nullable|string|max:255',
             'phone' => ['required', 'string', 'regex:/^[0-9]{10}$/'],
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => ['required', 'string', 'confirmed', Password::min(8)],
+            'password' => ['required', 'string', 'confirmed', Password::min(6)],
         ]);
 
         // 2. Crear el usuario en la base de datos
         $user = User::create([
             'first_name' => $validatedData['first_name'],
             'last_name_paternal' => $validatedData['last_name_paternal'],
-            'last_name_maternal' => $validatedData['last_name_maternal'],
+            'last_name_maternal' => $validatedData['last_name_maternal'] ?? '',
             'phone' => $validatedData['phone'],
             'email' => $validatedData['email'],
             'password' => Hash::make($validatedData['password']),

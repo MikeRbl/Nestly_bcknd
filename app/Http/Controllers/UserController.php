@@ -56,7 +56,7 @@ public function index(Request $request)
         $validatedData = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name_paternal' => 'required|string|max:255',
-            'last_name_maternal' => 'required|string|max:255',
+            'last_name_maternal' => 'nullable|string|max:255',
             'phone' => ['required', 'string', 'regex:/^[0-9]{10}$/'],
             'email' => 'required|string|email|max:255|unique:users',
             'password' => ['required', 'string', 'confirmed', Password::min(8)],
