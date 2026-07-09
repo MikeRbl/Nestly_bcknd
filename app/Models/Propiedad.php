@@ -57,6 +57,23 @@ class Propiedad extends Model
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array<int, string>
+     */
+    protected $appends = ['fotos_url'];
+
+    /**
+     * Devuelve las URLs completas de las fotos almacenadas.
+     */
+    public function getFotosUrlAttribute(): array
+    {
+        return array_map(function ($foto) {
+            return asset('storage/' . ltrim($foto, '/'));
+        }, $this->fotos ?? []);
+    }
+
+    /**
      * Relación con el usuario propietario (Uno a Muchos Inversa).
      */
     public function propietario()
